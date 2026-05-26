@@ -1,4 +1,4 @@
-import { useState, useEffect, useContext, useCallback } from 'react'
+import { useState, useEffect, useContext, useCallback, useRef } from 'react'
 import { AuthContext } from '../context/AuthContext'
 import { supabase } from '../lib/supabase'
 import Header from '../components/Header'
@@ -150,6 +150,7 @@ export default function CategoriesPage() {
       </Header>
 
       <div className="page-content">
+        {event?.event_date && <CountdownBanner eventDate={event.event_date} />}
         {!event ? (
           <div className="empty-state">
             <div className="empty-state-icon">🎪</div>
@@ -318,6 +319,71 @@ export default function CategoriesPage() {
       {showNewEvent && (
         <NewEventModal onClose={() => setShowNewEvent(false)} onSuccess={fetchData} />
       )}
+    </div>
+  )
+}
+
+function CountdownBanner({ eventDate }) {
+  const [now, setNow] = useState(() => new Date())
+  const timerRef = useRef(null)
+
+  useEffect(() => {
+    timerRef.current = setInterval(() => setNow(new Date()), 1000)
+    return () => clearInterval(timerRef.current)
+  }, [])
+
+  const start = new Date(eventDate)
+  start.setHours(0, 0, 0, 0)
+  const end = new Date(eventDate)
+  end.setHours(23, 59, 59, 999)
+
+  if (now > end) {
+    return (
+      <div className="countdown-banner countdown-ended">
+        <span className="countdown-icon">🎪</span>
+        <span className="countdown-label">Kermes bitti</span>
+      </div>
+    )
+  }
+
+  if (now >= start) {
+    return (
+      <div className="countdown-banner countdown-live">
+        <span className="countdown-icon">🎉</span>
+        <span className="countdown-label">Kermes başladı!</span>
+      </div>
+    )
+  }
+
+  const diff = start - now
+  const days    = Math.floor(diff / 86400000)
+  const hours   = Math.floor((diff % 86400000) / 3600000)
+  const minutes = Math.floor((diff % 3600000) / 60000)
+  const seconds = Math.floor((diff % 60000) / 1000)
+
+  return (
+    <div className="countdown-banner countdown-upcoming">
+      <div className="countdown-title">Kermese kalan süre</div>
+      <div className="countdown-units">
+        {days > 0 && (
+          <div className="countdown-unit">
+            <span className="countdown-num">{days}</span>
+            <span className="countdown-lbl">gün</span>
+          </div>
+        )}
+        <div className="countdown-unit">
+          <span className="countdown-num">{String(hours).padStart(2,'0')}</span>
+          <span className="countdown-lbl">saat</span>
+        </div>
+        <div className="countdown-unit">
+          <span className="countdown-num">{String(minutes).padStart(2,'0')}</span>
+          <span className="countdown-lbl">dak</span>
+        </div>
+        <div className="countdown-unit">
+          <span className="countdown-num">{String(seconds).padStart(2,'0')}</span>
+          <span className="countdown-lbl">sn</span>
+        </div>
+      </div>
     </div>
   )
 }
